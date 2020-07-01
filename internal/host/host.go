@@ -243,17 +243,17 @@ func (m *Manager) UpdateInstallProgress(ctx context.Context, h *models.Host, pro
 		return fmt.Errorf("can't set progress to host in status <%s>", swag.StringValue(h.Status))
 	}
 
-	statusInfo := *progress.ProgressStatus
+	statusInfo := string(progress.CurrentStep)
 
 	if progress.ProgressInfo != "" {
 		statusInfo += fmt.Sprintf(" - %s", progress.ProgressInfo)
 	}
 
-	switch *progress.ProgressStatus {
-	case models.HostInstallProgressParamsProgressStatusDone:
+	switch progress.CurrentStep {
+	case models.HostStepDone:
 		_, err := updateStateWithParams(logutil.FromContext(ctx, m.log), HostStatusInstalled, statusInfo, h, m.db)
 		return err
-	case models.HostInstallProgressParamsProgressStatusFailed:
+	case models.HostStepFailed:
 		_, err := updateStateWithParams(logutil.FromContext(ctx, m.log), HostStatusError, statusInfo, h, m.db)
 		return err
 	default:

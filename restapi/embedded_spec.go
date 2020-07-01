@@ -1999,26 +1999,16 @@ func init() {
     "host-install-progress-params": {
       "type": "object",
       "required": [
-        "progress_status"
+        "current_step"
       ],
       "properties": {
+        "current_step": {
+          "type": "string",
+          "$ref": "#/definitions/host-step"
+        },
         "progress_info": {
           "type": "string",
           "x-go-custom-tag": "gorm:\"type:varchar(2048)\""
-        },
-        "progress_status": {
-          "type": "string",
-          "enum": [
-            "Starting installation",
-            "Installing",
-            "Bootstrapping installation",
-            "Waiting for control plane",
-            "Writing image to disk",
-            "Rebooting",
-            "Joined",
-            "Done",
-            "Failed"
-          ]
         }
       }
     },
@@ -2027,6 +2017,20 @@ func init() {
       "items": {
         "$ref": "#/definitions/host"
       }
+    },
+    "host-step": {
+      "type": "string",
+      "enum": [
+        "Starting installation",
+        "Start Waiting for control plane",
+        "Installing",
+        "Writing image to disk",
+        "Finish Waiting for control plane",
+        "Rebooting",
+        "Joined",
+        "Done",
+        "Failed"
+      ]
     },
     "host_network": {
       "type": "object",
@@ -4375,26 +4379,16 @@ func init() {
     "host-install-progress-params": {
       "type": "object",
       "required": [
-        "progress_status"
+        "current_step"
       ],
       "properties": {
+        "current_step": {
+          "type": "string",
+          "$ref": "#/definitions/host-step"
+        },
         "progress_info": {
           "type": "string",
           "x-go-custom-tag": "gorm:\"type:varchar(2048)\""
-        },
-        "progress_status": {
-          "type": "string",
-          "enum": [
-            "Starting installation",
-            "Installing",
-            "Bootstrapping installation",
-            "Waiting for control plane",
-            "Writing image to disk",
-            "Rebooting",
-            "Joined",
-            "Done",
-            "Failed"
-          ]
         }
       }
     },
@@ -4403,6 +4397,20 @@ func init() {
       "items": {
         "$ref": "#/definitions/host"
       }
+    },
+    "host-step": {
+      "type": "string",
+      "enum": [
+        "Starting installation",
+        "Start Waiting for control plane",
+        "Installing",
+        "Writing image to disk",
+        "Finish Waiting for control plane",
+        "Rebooting",
+        "Joined",
+        "Done",
+        "Failed"
+      ]
     },
     "host_network": {
       "type": "object",

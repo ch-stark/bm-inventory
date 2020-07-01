@@ -29,8 +29,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var defaultHwInfo = "default hw info"                 // invalid hw info used only for tests
-var defaultProgressStatus = "default progress status" // invalid progress status used only for tests
+var defaultHwInfo = "default hw info"                              // invalid hw info used only for tests
+var defaultProgressStep = models.HostStep("default progress step") // invalid progress status used only for tests
 
 var _ = Describe("statemachine", func() {
 	var (
@@ -240,7 +240,7 @@ var _ = Describe("update_progress", func() {
 
 	Context("installaing host", func() {
 		var (
-			status   string
+			step     models.HostStep
 			progress *models.HostInstallProgressParams
 		)
 
@@ -251,56 +251,56 @@ var _ = Describe("update_progress", func() {
 		})
 
 		It("some_progress", func() {
-			progress.ProgressStatus = &defaultProgressStatus
+			progress.CurrentStep = defaultProgressStep
 			Expect(state.UpdateInstallProgress(ctx, &host, progress)).ShouldNot(HaveOccurred())
 			h := getHost(*host.ID, host.ClusterID, db)
 			Expect(*h.Status).Should(Equal(HostStatusInstallingInProgress))
-			Expect(*h.StatusInfo).Should(Equal(defaultProgressStatus))
+			Expect(*h.StatusInfo).Should(Equal(string(defaultProgressStep)))
 		})
 
 		It("writing to disk", func() {
-			status = models.HostInstallProgressParamsProgressStatusWritingImageToDisk
-			progress.ProgressStatus = &status
+			step = models.HostStepWritingImageToDisk
+			progress.CurrentStep = step
 			progress.ProgressInfo = "20%"
 			Expect(state.UpdateInstallProgress(ctx, &host, progress)).ShouldNot(HaveOccurred())
 			h := getHost(*host.ID, host.ClusterID, db)
 			Expect(*h.Status).Should(Equal(HostStatusInstallingInProgress))
-			Expect(*h.StatusInfo).Should(Equal(fmt.Sprintf("%s - %s", status, progress.ProgressInfo)))
+			Expect(*h.StatusInfo).Should(Equal(fmt.Sprintf("%s - %s", step, progress.ProgressInfo)))
 		})
 
 		It("done", func() {
-			status = models.HostInstallProgressParamsProgressStatusDone
-			progress.ProgressStatus = &status
+			step = models.HostStepDone
+			progress.CurrentStep = step
 			Expect(state.UpdateInstallProgress(ctx, &host, progress)).ShouldNot(HaveOccurred())
 			h := getHost(*host.ID, host.ClusterID, db)
 			Expect(*h.Status).Should(Equal(HostStatusInstalled))
-			Expect(*h.StatusInfo).Should(Equal(status))
+			Expect(*h.StatusInfo).Should(Equal(string(step)))
 		})
 
 		It("progress_failed", func() {
-			status = models.HostInstallProgressParamsProgressStatusFailed
-			progress.ProgressStatus = &status
+			step = models.HostStepFailed
+			progress.CurrentStep = step
 			progress.ProgressInfo = "reason"
 			Expect(state.UpdateInstallProgress(ctx, &host, progress)).ShouldNot(HaveOccurred())
 			h := getHost(*host.ID, host.ClusterID, db)
 			Expect(*h.Status).Should(Equal(HostStatusError))
-			Expect(*h.StatusInfo).Should(Equal(fmt.Sprintf("%s - %s", status, progress.ProgressInfo)))
+			Expect(*h.StatusInfo).Should(Equal(fmt.Sprintf("%s - %s", step, progress.ProgressInfo)))
 		})
 
 		It("progress_failed_empty_reason", func() {
-			status = models.HostInstallProgressParamsProgressStatusFailed
-			progress.ProgressStatus = &status
+			step = models.HostStepFailed
+			progress.CurrentStep = step
 			progress.ProgressInfo = ""
 			Expect(state.UpdateInstallProgress(ctx, &host, progress)).ShouldNot(HaveOccurred())
 			h := getHost(*host.ID, host.ClusterID, db)
 			Expect(*h.Status).Should(Equal(HostStatusError))
-			Expect(*h.StatusInfo).Should(Equal(status))
+			Expect(*h.StatusInfo).Should(Equal(string(step)))
 		})
 	})
 
 	It("invalid state", func() {
 		Expect(state.UpdateInstallProgress(ctx, &host,
-			&models.HostInstallProgressParams{ProgressStatus: &defaultProgressStatus})).Should(HaveOccurred())
+			&models.HostInstallProgressParams{CurrentStep: defaultProgressStep})).Should(HaveOccurred())
 	})
 })
 
