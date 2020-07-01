@@ -20,6 +20,7 @@ OBJEXP := $(or ${OBJEXP},quay.io/ocpmetal/s3-object-expirer:latest)
 GIT_REVISION := $(shell git rev-parse HEAD)
 APPLY_NAMESPACE := $(or ${APPLY_NAMESPACE},True)
 ROUTE53_SECRET := ${ROUTE53_SECRET}
+NAMESPACE := $(or ${TARGET},test)
 
 all: build
 
