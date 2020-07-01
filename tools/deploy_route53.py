@@ -1,10 +1,12 @@
 import os
 import utils
 import argparse
+import yaml
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--secret")
-
+parser.add_argument('--service', help='Service name to use', type=str, default=None)
+parser.add_argument('--namespace', help='Namespace to use', type=str, default=None)
 args = parser.parse_args()
 
 
@@ -20,8 +22,11 @@ def deploy_secret():
         with open(dst_file, "w+") as dst:
             data = src.read()
             data = data.replace("BASE64_CREDS", args.secret)
+            data = yaml.safe_load(data)
+            utils.update_metadata(data, name=args.service, namespace=args.namespace)
             print("Deploying {}: {}".format(topic, dst_file))
-            dst.write(data)
+            yaml.dump(data, dst, default_flow_style=False)
+
     utils.apply(dst_file)
 
 

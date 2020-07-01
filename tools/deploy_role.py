@@ -1,5 +1,12 @@
 import os
 import utils
+import argparse
+import yaml
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--service', help='Service name to use', type=str, default=None)
+parser.add_argument('--namespace', help='Namespace to use', type=str, default=None)
+args = parser.parse_args()
 
 
 def main():
@@ -8,9 +15,10 @@ def main():
 
     with open(src_file, "r") as src:
         with open(dst_file, "w+") as dst:
-            data = src.read()
+            data = yaml.safe_load(src)
+            utils.update_metadata(data, name=args.service, namespace=args.namespace)
             print("Deploying {}".format(dst_file))
-            dst.write(data)
+            yaml.dump(data, dst, default_flow_style=False)
 
     utils.apply(dst_file)
 

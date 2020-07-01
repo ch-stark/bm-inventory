@@ -1,9 +1,11 @@
 import os
 import utils
 import argparse
-
+import yaml
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--service', help='Service name to use', type=str, default=None)
+parser.add_argument('--namespace', help='Namespace to use', type=str, default=None)
 parser.add_argument("--deploy-tag", help='Tag for all deployment images', type=str, default='latest')
 args = parser.parse_args()
 
@@ -18,8 +20,10 @@ def main():
                 data = data.replace("REPLACE_IMAGE", "quay.io/ocpmetal/s3-object-expirer:{}".format(args.deploy_tag))
             else:
                 data = data.replace("REPLACE_IMAGE", os.environ.get("OBJEXP"))
+            data = yaml.safe_load(data)
+            utils.update_metadata(data, name=args.service, namespace=args.namespace)
             print("Deploying {}".format(dst_file))
-            dst.write(data)
+            yaml.dump(data, dst, default_flow_style=False)
 
     utils.apply(dst_file)
 

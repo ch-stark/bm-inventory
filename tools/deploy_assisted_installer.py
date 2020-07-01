@@ -4,6 +4,8 @@ import argparse
 import yaml
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--service', help='Service name to use', type=str, default=None)
+parser.add_argument('--namespace', help='Namespace to use', type=str, default=None)
 parser.add_argument("--deploy-tag", help='Tag for all deployment images', type=str, default='latest')
 parser.add_argument("--subsystem-test", help='deploy in subsystem mode', action='store_true')
 args = parser.parse_args()
@@ -28,6 +30,8 @@ def main():
             data["spec"]["template"]["spec"]["containers"][0]["imagePullPolicy"] = "Never"
         else:
             data["spec"]["template"]["spec"]["containers"][0]["imagePullPolicy"] = "Always"
+
+    utils.update_metadata(data, name=args.service, namespace=args.namespace)
 
     with open(DST_FILE, "w+") as dst:
         yaml.dump(data, dst, default_flow_style=False)

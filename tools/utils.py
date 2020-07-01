@@ -4,7 +4,7 @@ import re
 import yaml
 from functools import reduce
 
-MINIKUBE_CMD = 'minikube -n assisted-installer'
+MINIKUBE_CMD = 'minikube'
 KUBECTL_CMD = 'kubectl -n assisted-installer'
 
 
@@ -12,24 +12,24 @@ def check_output(cmd):
     return subprocess.check_output(cmd, shell=True).decode("utf-8")
 
 
-def get_service_host(service, target=None, domain=""):
+def get_service_host(service, target=None, domain="", namespace='assisted-installer'):
     if target is None or target == "minikube":
-        reply = check_output("{} service --url {}".format(MINIKUBE_CMD, service))
+        reply = check_output("{} -n {} service --url {}".format(MINIKUBE_CMD, namespace, service))
         return re.sub("http://(.*):.*", r'\1', reply)
     elif target == "oc-ingress":
-        return "{}.{}".format(service, get_domain(domain))
+        return "{}.{}".format(service, get_domain(domain, namespace))
     else:
-        cmd = '{kubecmd} get service {service} | grep {service}'.format(kubecmd=KUBECTL_CMD, service=service)
+        cmd = '{kubecmd} -n {namespace} get service {service} | grep {service}'.format(kubecmd=KUBECTL_CMD, namespace=namespace, service=service)
         reply = check_output(cmd)[:-1].split()
         return reply[3]
 
 
-def get_service_port(service, target=None):
+def get_service_port(service, target=None, namespace='assisted-installer'):
     if target is None or target == "minikube":
-        reply = check_output("{} service --url {}".format(MINIKUBE_CMD, service))
+        reply = check_output("{} -n {} service --url {}".format(MINIKUBE_CMD, namespace, service))
         return reply.split(":")[-1]
     else:
-        cmd = '{kubecmd} get service {service} | grep {service}'.format(kubecmd=KUBECTL_CMD, service=service)
+        cmd = '{kubecmd} -n {namespace} get service {service} | grep {service}'.format(kubecmd=KUBECTL_CMD, namespace=namespace, service=service)
         reply = check_output(cmd)[:-1].split()
         return reply[4].split(":")[0]
 
@@ -38,10 +38,10 @@ def apply(file):
     print(check_output("kubectl apply -f {}".format(file)))
 
 
-def get_domain(domain=""):
+def get_domain(domain="", namespace='assisted-installer'):
     if domain:
         return domain
-    cmd = '{kubecmd} get ingresscontrollers.operator.openshift.io -n openshift-ingress-operator -o custom-columns=:.status.domain'.format(kubecmd=KUBECTL_CMD)
+    cmd = '{kubecmd} -n {namespace} get ingresscontrollers.operator.openshift.io -n openshift-ingress-operator -o custom-columns=:.status.domain'.format(kubecmd=KUBECTL_CMD, namespace=namespace)
     return check_output(cmd).split()[-1]
 
 
@@ -92,3 +92,14 @@ def check_if_exists(k8s_object, k8s_object_name, namespace="assisted-installer")
         output = False
 
     return output
+
+
+def update_metadata(yaml_data, **kwargs):
+    if all(v is None for v in kwargs.values()):
+        return
+
+    for k in yaml_data.get('metadata'):
+        if k not in kwargs or kwargs[k] is None:
+            continue
+        yaml_data['metadata'][k] = kwargs[k]
+

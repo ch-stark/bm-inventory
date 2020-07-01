@@ -6,24 +6,27 @@ import yaml
 parser = argparse.ArgumentParser()
 parser.add_argument("--target")
 parser.add_argument("--domain")
+parser.add_argument('--service', help='Service name to use', type=str, default=None)
+parser.add_argument('--namespace', help='Namespace to use', type=str, default=None)
 parser.add_argument("--deploy-tag", help='Tag for all deployment images', type=str, default='latest')
 
 args = parser.parse_args()
 
+SERVICE_NAME = args.service or 'bm-inventory'
+NAMESPACE = args.namespace or 'assisted-installer'
 
 SRC_FILE = os.path.join(os.getcwd(), "deploy/bm-inventory-configmap.yaml")
 DST_FILE = os.path.join(os.getcwd(), "build/bm-inventory-configmap.yaml")
-SERVICE = "bm-inventory"
 
 
 def main():
     # TODO: delete once rename everything to assisted-installer
     if args.target == "oc-ingress":
-        service_host = "assisted-installer.{}".format(utils.get_domain(args.domain))
+        service_host = "assisted-installer.{}".format(utils.get_domain(args.domain, NAMESPACE))
         service_port = "80"
     else:
-        service_host = utils.get_service_host(SERVICE, args.target)
-        service_port = utils.get_service_port(SERVICE, args.target)
+        service_host = utils.get_service_host(SERVICE_NAME, args.target, NAMESPACE)
+        service_port = utils.get_service_port(SERVICE_NAME, args.target, NAMESPACE)
     with open(SRC_FILE, "r") as src:
         with open(DST_FILE, "w+") as dst:
             data = src.read()
@@ -48,6 +51,9 @@ def main():
                 y = yaml.load(data)
                 y['data'].update({"SELF_VERSION": os.environ.get("SERVICE")})
                 data = yaml.dump(y)
+
+            utils.update_metadata(data, name=args.service, namespace=args.namespace)
+
             dst.write(data)
 
     utils.apply(DST_FILE)
